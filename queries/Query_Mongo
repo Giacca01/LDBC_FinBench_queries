@@ -1,0 +1,13 @@
+// Per ciascuna delle aziende individuate in cui hanno investito
+// gli utenti di interesse, creo una scheda riepilogativa, inserendo
+// numero di aziende investitrici
+// numero di aziende in cui ha investito
+// patrimonio
+// debiti
+
+
+//  Per ciascuno degli account lavatrice recuperati dalla query in Neo
+// costruisco una scheda riepilogativa, inserendo
+// proprietario
+// indebitamento del proprietario
+// patrimonio complessivo
