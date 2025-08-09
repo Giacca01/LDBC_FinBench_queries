@@ -1,7 +1,3 @@
-docs
-LDBC_docs
-mongo_conf
-neo_conf
 # Logs
 logs
 *.log
@@ -26,4 +22,4 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
-*.json
+.json
