@@ -2,12 +2,12 @@ import { Router } from "express";
 import neo4j, { Integer, Node, Relationship } from "neo4j-driver"
 
 
-function createAnalyticRouter(session){
+function createAnalyticRouter(session, dbMongo){
     const router = Router();
     
     router.get("/investors", async (req, res)=>{
         try {
-            const query = "MATCH (p:Person)-[:PersonInvest]->(:Company) RETURN p.id as id, p.name as name"
+            const query = "MATCH (p:Person)-[:PersonInvest]->(:Company) RETURN DISTINCT p.id as id, p.name as name ORDER BY name"
             const result = await session.run(query, {}, { database: "Instance01" });
 
 
@@ -18,43 +18,67 @@ function createAnalyticRouter(session){
             }
             res.json(aux);
 
-            session.close();
         } catch (error) {
-            res.status(500).json({ error: error });
+            res.status(500).json({ error: error.message });
         }
         
     });
 
     router.get("/intersection/:usrOne/usrTwo/:usrTwo", async (req, res) => {
-        const usrOne = req.params.usrOne;
-        const usrTwo = req.params.usrTwo;
+        const usrOne = Number(req.params.usrOne);
+        const usrTwo = Number(req.params.usrTwo);
+
+        console.log("User one: " + usrOne);
+        console.log("User two: " + usrTwo);
 
         try {
-            const query = "MATCH (p1:Person)-[:PersonInvest]->(c1:Company)<-[:PersonInvest]-(p2:Person) WHERE p1._id = $usrOne and p2._id = $usrTwo RETURN c1._id";
+            const query = "MATCH (p1:Person)-[:PersonInvest]->(c1:Company)<-[:PersonInvest]-(p2:Person) WHERE p1.id = $usrOne AND p2.id = $usrTwo RETURN DISTINCT c1.id";
+            console.log(query);
             const result = await session.run(query, {usrOne: usrOne, usrTwo: usrTwo}, { database: "Instance01" });
+            console.log(result.records);
             res.json(result.records.length);
-        } catch (error) {
-            res.status(500).json({ error: error });
+        } catch (result) {
+            console.log("gay");
+            console.log(result.code);
+            res.status(500).json({ error: result.code });
         }
     });
 
     router.get("/union/:usrOne/usrTwo/:usrTwo", async (req, res) => {
-        const usrOne = req.params.usrOne;
-        const usrTwo = req.params.usrTwo;
+        const usrOne = Number(req.params.usrOne);
+        const usrTwo = Number(req.params.usrTwo);
 
         try {
-            const query = "MATCH (p1:Person)-[:PersonInvest]->(c1:Company) WHERE p1.id = $usrOne OR p1.id = $usrTwo RETURN DISTINCT c1._id";
+            const query = "MATCH (p1:Person)-[:PersonInvest]->(c1:Company) WHERE p1.id = $usrOne OR p1.id = $usrTwo RETURN DISTINCT c1.id as id";
             const result = await session.run(query, {usrOne:usrOne, usrTwo:usrTwo}, {database: "Instance01"})
 
             let aux = [];
             for (let record of result.records) {
+                console.log(record)
                 aux.push(record.get("id"));
             }
+            console.log("Unione: " + result.records.length);
             res.json({"companiesIds": aux, "count": result.records.length});
-        } catch (error) {
-            res.status(500).json({ error: error });
+        } catch (result) {
+            res.status(500).json({ error: result.message });
         }
     });
+
+    router.get('/summary', async (req, res) => {
+        try {
+            const accounts = dbMongo.collection("account");
+            const prova = (await accounts.find({
+                Owner: "COMPANY"
+            }).toArray());
+
+            console.log(prova);
+        } catch (error) {
+            console.log(error.message)
+            res.status(500).json({ error: error.message });
+        }
+    });
+
+    return router;
 }
 
 export default createAnalyticRouter;

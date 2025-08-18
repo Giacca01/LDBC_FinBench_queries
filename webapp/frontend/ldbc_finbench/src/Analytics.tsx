@@ -63,32 +63,48 @@ function InvestorsList(){
         setSimilarity(0.0);
     };
 
+    const computeSimilarity = (async ()=> {
+        try {
+            console.log("Selected row: " + selectedRows[0]);
+            const usrOne: number = investors[selectedRows[0]].id
+            const usrTwo: number = investors[selectedRows[1]].id
+
+            
+            let response = await fetch("http://localhost:2006/analytic/intersection/" + usrOne + "/usrTwo/" + usrTwo);
+            if (!response.ok)
+                throw new Error("Bad responde: " + response.status);
+            const intersectionLength: number = await response.json();
+            console.log(intersectionLength);
+
+            response = await fetch("http://localhost:2006/analytic/union/" + usrOne + "/usrTwo/" + usrTwo);
+            if (!response.ok)
+                throw new Error("Bad responde: " + response.status);
+            const commonCompanies: Company = await response.json();
+            console.log("Commong companies: " + commonCompanies.count);
+
+            let jaccard: number = intersectionLength / commonCompanies.count;
+
+            setSimilarity(jaccard);
+            setShowSimilarity(true)
+        } catch (error) {
+            console.error("Error computing similarity: ", error);
+        } finally {
+            // setLoading(false);
+        }
+    });
+
     useEffect(()=>{
-        async function computeSimilarity() {
+        async function prova(){
             try {
-                let response = await fetch("http://localhost:2006/analytic/intersection");
+                const response = await fetch("http://localhost:2006/analytic/summary");
                 if (!response.ok)
                     throw new Error("Bad responde: " + response.status);
-                const intersectionLength: number = await response.json();
-                console.log(intersectionLength);
-
-                response = await fetch("http://localhost:2006/analytic/union");
-                if (!response.ok)
-                    throw new Error("Bad responde: " + response.status);
-                const commonCompanies: Company[] = await response.json();
-                console.log(commonCompanies);
-
-                let jaccard: number = intersectionLength / commonCompanies.length; 
-
-                setSimilarity(jaccard);
             } catch (error) {
-                console.error("Error computing similarity: ", error);
-            } finally {
-               // setLoading(false);
+                console.error("Error test: ", error);
             }
         }
 
-        computeSimilarity();
+        prova();
     }, []);
 
     if (loading) return <p className="text-white">Loading...</p>;
@@ -114,7 +130,7 @@ function InvestorsList(){
                 <div className="flex justify-center mt-6">
                     <button
                         className="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-6 rounded-lg shadow-md transition-colors"
-                        onClick={() => setShowSimilarity(true)}
+                        onClick={() => computeSimilarity()}
                     >
                         Compute Similarity
                     </button>
