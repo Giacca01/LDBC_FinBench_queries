@@ -11,3 +11,21 @@
 // proprietario
 // indebitamento del proprietario
 // patrimonio complessivo
+
+
+// numero di aziende in cui investe quell corrente
+db.aggregate([
+    // recupero tutte le aziende di interesse
+    {$match: {id: {$in: vettore}}},
+    {
+        // scheda a formato variabile
+        $group: {
+            _id: "$id", 
+            {$cond: {if: {invest: {$exists: true}}, then: numInvest: {$size: "$invest"}}},
+            {$cond: {if: {own: {$exists: true}}, then: numAccounts: {$size: "$own"}}}, 
+            {$cond: {if: {apply: {$exists: true}}, then: numLoans: {$size: "$apply"}}}
+        }
+    }
+])
+
+// inserimento della scheda riepilogativa

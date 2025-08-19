@@ -11,6 +11,13 @@ type Company = {
     companiesIds: number[];
     count: number;
 }
+
+type Summary = {
+    name: string;
+    investors: number;
+    accounts: number;
+    loans: number;
+}
 // Componente per la formulazione del risultato
 // della prima query analitica
 function InvestorsList(){
@@ -22,6 +29,7 @@ function InvestorsList(){
     // altro componente dello stato: la visibilità del paragrafo con la similarità
     const [showSimilarity, setShowSimilarity] = useState(false);
     const [similarity, setSimilarity] = useState(0.0);
+    const [summary, setSummary] = useState<Summary[]>([]);
 
     useEffect(() => {
         async function fetchInvestors(){
@@ -85,7 +93,8 @@ function InvestorsList(){
             let jaccard: number = intersectionLength / commonCompanies.count;
 
             setSimilarity(jaccard);
-            setShowSimilarity(true)
+            computeSummary(commonCompanies.companiesIds);
+            setShowSimilarity(true);
         } catch (error) {
             console.error("Error computing similarity: ", error);
         } finally {
@@ -93,20 +102,25 @@ function InvestorsList(){
         }
     });
 
-    useEffect(()=>{
-        async function prova(){
-            try {
-                const response = await fetch("http://localhost:2006/analytic/summary");
-                if (!response.ok)
-                    throw new Error("Bad responde: " + response.status);
-            } catch (error) {
-                console.error("Error test: ", error);
-            }
+    const computeSummary = (async (companies: Number[])=>{
+        try {
+            const response = await fetch("http://localhost:2006/analytic/summary", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({ids: companies})
+            });
+            if (!response.ok)
+                throw new Error("Bad responde: " + response.status);
+
+            const summarySheets: Summary[] = await response.json();
+            console.log(summarySheets);
+            setSummary(summarySheets);
+        } catch (error) {
+            console.error("Error computing summary. ", error);
         }
+    });
 
-        prova();
-    }, []);
-
+    
     if (loading) return <p className="text-white">Loading...</p>;
 
     return(
@@ -120,10 +134,8 @@ function InvestorsList(){
             </p>
 
             {/* Table */}
-            <div className="w-full flex justify-center">
-                <div className="w-4/5">
-                    <DataTable columns={["id", "name"]} data={investors} selectedRows={selectedRows} onRowToggle={toggleRow} />
-                </div>
+            <div className="flex justify-center items-center">
+                <DataTable columns={["id", "name"]} data={investors} selectedRows={selectedRows} onRowToggle={toggleRow} />
             </div>
             {/* Se ho selezionato due righe mostro il bottone per il calcolo */}
             {selectedRows.length === 2 && (
@@ -141,6 +153,9 @@ function InvestorsList(){
                     <p className="text-white text-center max-w-3xl mx-auto mt-6 leading-relaxed">
                         The similarity value is: {similarity}
                     </p>
+                    <div className="flex justify-center items-center">
+                        <DataTable columns={["name", "investors", "accounts", "loans"]} data={summary}/>
+                    </div>
                 </div>
             )}
         </main>

@@ -64,13 +64,34 @@ function createAnalyticRouter(session, dbMongo){
         }
     });
 
-    router.get('/summary', async (req, res) => {
-        try {
-            const accounts = dbMongo.collection("account");
-            const prova = (await accounts.find({
-                Owner: "COMPANY"
-            }).toArray());
+    router.post('/summary', async (req, res) => {
+        let query = [
+            { $match: { id: { $in: req.body.ids } } },
+            {
+                $addFields: {
+                    numInvest: { $cond: [{ $isArray: "$invest" }, { $size: "$invest" }, 0] },
+                    numAccounts: { $cond: [{ $isArray: "$own" }, { $size: "$own" }, 0] },
+                    numLoans: { $cond: [{ $isArray: "$apply" }, { $size: "$apply" }, 0] }
+                }
+            },
+            {
+                $group: {
+                    _id: "$id",
+                    investors: { $first: "$numInvest"},
+                    accounts: { $first: "$numAccounts"},
+                    loans: { $first: "$numLoans"},
+                    name: {$first: "$name"}
+                }
+            }
+        ];
 
+        try {
+            const companies = dbMongo.collection("company");
+            const summarySheets = await companies.aggregate(query).toArray();
+            const summaries = dbMongo.collection("summary");
+            await summaries.insertMany(summarySheets);
+            
+            res.json(summarySheets);
             console.log(prova);
         } catch (error) {
             console.log(error.message)
