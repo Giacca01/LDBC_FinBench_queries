@@ -1,15 +1,13 @@
 import React, { useEffect, useState } from "react";
-import { GraphCanvas } from 'reagraph';
-import DataTable from "./DataTable";
+import { GraphCanvas, darkTheme } from 'reagraph';
 import "@xyflow/react/dist/style.css"
+import Message from "./Message";
 
 type MoneyLdr = {
-    idSrc: number;
     src: string;
-    idMid: number;
     mid: string;
-    idDst: number;
     dst: string;
+    startDate: number;
 };
 
 type Node = {
@@ -27,19 +25,27 @@ type Edge = {
 function Graph(){
     const [nodes, setNodes] = useState<Node[]>([]);
     const [edges, setEdges] = useState<Edge[]>([]);
+    const [showMessage, setShowMessage] = useState(false);
+    const [messageType, setMessageType] = useState("");
+    const [message, setMessage] = useState("");
 
     useEffect(()=>{
         async function fetchGraph(){
+            setMessageType("info");
+            setMessage("Loading Investors...");
+            setShowMessage(true);
+            
             try {
-                const response = await fetch("http://localhost:2006/lookup/moneyLaundary/10000/endWindow/19331");
+                const response = await fetch("http://localhost:2006/lookup/moneyLaundary/19330/endWindow/19332");
                 if (!response.ok)
-                    throw new Error("Bad responde: " + response.status);
+                    throw new Error("Failed to fetch money laundry resource. Code: " + response.status + " Message: " + response.statusText);
                 const responseData: MoneyLdr[] = await response.json();
                 
                 let nodesMap : Map<string, Node> = new Map();
                 let edges : Edge[] = [];
                 let i : number = 0;
                 let src : string = "";
+                let mid : string = "";
                 let dst : string = "";
 
                 for (let elem of responseData){
@@ -48,7 +54,7 @@ function Graph(){
                         i++;
                         nodesMap.set(elem.src, {
                             id: i.toString(),
-                            label: elem.src
+                            label: "User: " + elem.src
                         });
                     }
 
@@ -57,7 +63,7 @@ function Graph(){
                         i++;
                         nodesMap.set(elem.mid, {
                             id: i.toString(),
-                            label: elem.mid
+                            label: "Account: " + elem.mid
                         });
                     }
 
@@ -65,23 +71,25 @@ function Graph(){
                         i++;
                         nodesMap.set(elem.dst, {
                             id: i.toString(),
-                            label: elem.dst
+                            label: "User: " + elem.dst
                         });
                     }
 
                     src = nodesMap.get(elem.src)!.id;
-                    dst = nodesMap.get(elem.mid)!.id;
-                    edges.push({ id: src+'->'+dst, source: src, target: dst, label: src + "-" + dst });
-
-                    src = dst
+                    mid = nodesMap.get(elem.mid)!.id;
                     dst = nodesMap.get(elem.dst)!.id;
-                    edges.push({ id: src + '->' + dst, source: src, target: dst, label: src + "-" + dst });
+                    edges.push({ id: src + '->' + mid + ":" + elem.startDate, source: src, target: mid, label: "Transaction: " + src + "-" + mid + " date " + elem.startDate});
+
+                    edges.push({ id: mid + '->' + dst + ":" + elem.startDate, source: mid, target: dst, label: "Transaction: " + mid + "-" + dst + " date " + elem.startDate});
                 }
 
                 setNodes([...nodesMap.values()]);
                 setEdges(edges);
+                setShowMessage(false);
             } catch (error) {
-                console.error("Error fetiching graph: ", error);
+                setMessageType("error");
+                setMessage("An error occurred while loading suspect transactions. Error message: " + error);
+                setShowMessage(true);
             }
         }
 
@@ -89,23 +97,13 @@ function Graph(){
     }, []);
 
     return (
-        <div className="w-full flex justify-center">
-            <div style={{ width: '80%', height: '40vh', backgroundColor: 'rgb(15, 30, 65)', borderRadius: '12px' }}>
-                <GraphCanvas nodes={nodes} edges={edges}></GraphCanvas>
-            </div>
+        <div className="w-full mt-60 flex justify-center" style={{ position:"absolute", width: '70%', height: '60vh', backgroundColor: 'rgb(15, 30, 65)', borderRadius: '12px' }}>
+            <GraphCanvas nodes={nodes} edges={edges} theme={darkTheme} ></GraphCanvas>
         </div>
     );
 }
 
 function Lookup(){
-    // dati delle schede riepilogative
-    const columns = ["ID", "Name", "Type", "Status"];
-    const data = [
-        ["1", "Alice", "Customer", "Active"],
-        ["2", "Order #102", "Order", "Shipped"],
-        ["3", "Product A", "Product", "In Stock"]
-    ];
-
     return (
         <main className="min-h-screen flex flex-col items-center justify-start p-6 space-y-8" style={{ backgroundColor: "rgb(10, 25, 55)" }}>
             {/* Title */}
@@ -115,19 +113,14 @@ function Lookup(){
 
             {/* Intro paragraph */}
             <p className="text-white text-center max-w-3xl mx-auto mb-8 leading-relaxed">
-                In this page, two different lookup queries can be tested.
-                The first one, formulated over the data copy stored in Neo4j, computes
-                a set of accounts involved in money laundry, defined as those that have received
-                and/or transferred money from/to blocked accounts.
-                The second, formulated over the MongoDB copy, computes a small summary of the owners
-                of such account.
+                In this page, a single lookup query, formulated on the Neo4j copy of the data, can be tested.
+                The query returns a graph of triplets user1-account-user2, representing suspect money laundry operations.
+                A money laundry operation is defined as a transaction of money from user1 to user2, involving the intermediate
+                account, that started in a certain time window.
+                For the transaction to be suspect, at least one of the involved account (either that of user1 or user2, or
+                the middle one) must be blocked.
             </p>
             <Graph/>
-            <div className="w-full flex justify-center">
-                <div className="w-4/5">
-                    <DataTable columns={columns} data={data} />
-                </div>
-            </div>
         </main>
     );
 }

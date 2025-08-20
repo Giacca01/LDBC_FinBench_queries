@@ -1,6 +1,7 @@
 import React, { useEffect } from "react";
 import { useState } from "react";
 import DataTable from "./DataTable";
+import Message from "./Message";
 
 type Investor = {
     id: number;
@@ -22,7 +23,6 @@ type Summary = {
 // della prima query analitica
 function InvestorsList(){
     const [investors, setInvestors] = useState<Investor[]>([]);
-    const [loading, setLoading] = useState(true);
     // lo stato della tabella sono le righe selezionate
     // setSelectedRows è il metodo per aggiornare lo stato
     const [selectedRows, setSelectedRows] = useState<number[]>([]);
@@ -30,20 +30,28 @@ function InvestorsList(){
     const [showSimilarity, setShowSimilarity] = useState(false);
     const [similarity, setSimilarity] = useState(0.0);
     const [summary, setSummary] = useState<Summary[]>([]);
+    const [showMessage, setShowMessage] = useState(false);
+    const [messageType, setMessageType] = useState("");
+    const [message, setMessage] = useState("");
 
     useEffect(() => {
         async function fetchInvestors(){
+            setMessageType("info");
+            setMessage("Loading Investors...");
+            setShowMessage(true);
+
             try {
                 const response = await fetch("http://localhost:2006/analytic/investors");
                 if (!response.ok)
-                    throw new Error("Bad responde: " + response.status);
+                    throw new Error("Failed to fetch investors resource. Code: " + response.status + " Message: " + response.statusText);
+
                 const data: Investor[] = await response.json();
+                setShowMessage(false);
                 setInvestors(data);
-                console.log(data);
             } catch (error) {
-                console.error("Error fetiching investors: ", error);
-            } finally {
-                setLoading(false);
+                setMessageType("error");
+                setMessage("An error occurred while loading investors. Error message: " + error);
+                setShowMessage(true);
             }
         }
 
@@ -66,39 +74,37 @@ function InvestorsList(){
                 return prev;
         });
         
-
+        setShowMessage(false);
         setShowSimilarity(false);
         setSimilarity(0.0);
     };
 
     const computeSimilarity = (async ()=> {
         try {
-            console.log("Selected row: " + selectedRows[0]);
             const usrOne: number = investors[selectedRows[0]].id
             const usrTwo: number = investors[selectedRows[1]].id
 
             
             let response = await fetch("http://localhost:2006/analytic/intersection/" + usrOne + "/usrTwo/" + usrTwo);
             if (!response.ok)
-                throw new Error("Bad responde: " + response.status);
+                throw new Error("Failed to fetch intersection resource. Code: " + response.status + " Message: " + response.statusText);  
             const intersectionLength: number = await response.json();
-            console.log(intersectionLength);
 
             response = await fetch("http://localhost:2006/analytic/union/" + usrOne + "/usrTwo/" + usrTwo);
             if (!response.ok)
-                throw new Error("Bad responde: " + response.status);
+                throw new Error("Failed to fetch union resource. Code: " + response.status + " Message: " + response.statusText);
             const commonCompanies: Company = await response.json();
-            console.log("Commong companies: " + commonCompanies.count);
 
             let jaccard: number = intersectionLength / commonCompanies.count;
 
             setSimilarity(jaccard);
             computeSummary(commonCompanies.companiesIds);
             setShowSimilarity(true);
+            setShowMessage(false);
         } catch (error) {
-            console.error("Error computing similarity: ", error);
-        } finally {
-            // setLoading(false);
+            setMessageType("error");
+            setMessage("An error occurred while computing simlarity. Error message: " + error);
+            setShowMessage(true);
         }
     });
 
@@ -110,18 +116,17 @@ function InvestorsList(){
                 body: JSON.stringify({ids: companies})
             });
             if (!response.ok)
-                throw new Error("Bad responde: " + response.status);
+                throw new Error("Failed to fetch summary resource. Code: " + response.status + " Message: " + response.statusText);
 
             const summarySheets: Summary[] = await response.json();
-            console.log(summarySheets);
             setSummary(summarySheets);
+            setShowMessage(false);
         } catch (error) {
-            console.error("Error computing summary. ", error);
+            setMessageType("error");
+            setMessage("An error occurred while preparing compny summary report. Error message: " + error);
+            setShowMessage(true);
         }
     });
-
-    
-    if (loading) return <p className="text-white">Loading...</p>;
 
     return(
         <main
@@ -129,7 +134,7 @@ function InvestorsList(){
             style={{ backgroundColor: "rgb(10, 25, 55)" }} // deep opaque blue
         >
             {/* Intro paragraph */}
-            <p className="text-white text-center max-w-3xl mx-auto mb-8 leading-relaxed">
+            <p className="text-white text-lg text-center max-w-3xl mx-auto mb-8 leading-relaxed">
                 You can select the two users from the following table.
             </p>
 
@@ -150,14 +155,24 @@ function InvestorsList(){
             )}
             {showSimilarity && (
                 <div>
-                    <p className="text-white text-center max-w-3xl mx-auto mt-6 leading-relaxed">
+                    <p className="text-white text-center text-lg max-w-3xl mx-auto mt-6 leading-relaxed">
                         The similarity value is: {similarity}
+                    </p>
+                    <p className="text-white text-lg text-center max-w-3xl mx-auto mb-8 leading-relaxed">
+                        Summary of the companies the users invest in
                     </p>
                     <div className="flex justify-center items-center">
                         <DataTable columns={["name", "investors", "accounts", "loans"]} data={summary}/>
                     </div>
                 </div>
             )}
+            {
+                showMessage && (
+                    <div className="flex justify-center items-center">
+                        <Message msgType={messageType} msgText={message}/>
+                    </div>
+                )
+            }
         </main>
     );
 }
@@ -171,11 +186,14 @@ function Analytics(){
             </h1>
 
             {/* Intro paragraph */}
-            <p className="text-white text-center max-w-3xl mx-auto mb-8 leading-relaxed">
+            <p className="text-white text-lg text-center max-w-3xl mx-auto mb-8 leading-relaxed">
                 In this page, two different analytic queries can be tested.
                 The first one, formulated over the data copy stored in Neo4j, computes
                 the similarity between the investment portfolios of two different users.
-                The second query, formulate over the MongoDB copy, computes a resume of the two users.
+                The second query, formulate over the MongoDB copy, computes a resume of the compenies
+                the users invest in.
+                Each row of the summary features, for a different company, the number of investors (companies
+                that invest in the current one), the number of accounts owned, and the number of loans taken out.
             </p>
             <InvestorsList/>
         </main>

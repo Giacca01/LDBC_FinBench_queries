@@ -4,7 +4,7 @@ function Home(){
     return(
         <main
             className="flex flex-col items-center justify-center min-h-screen px-6"
-            style={{ backgroundColor: "rgb(8, 20, 45)" }} // a nice dark blue, not too dark
+            style={{ backgroundColor: "rgb(8, 20, 45)"}} // a nice dark blue, not too dark
         >
             <h1 className="text-white text-4xl font-bold mb-6 select-none">
                 LDBC Finbech Project
