@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 
 // tipo degli argomenti della data table
 interface DataTableArgs{
@@ -10,15 +10,34 @@ interface DataTableArgs{
 
 function DataTable({ columns, data, selectedRows, onRowToggle }: DataTableArgs){
     const [searchValue, setSearchValue] = useState("");
+    const [rowsToDisplay, setRowsToDisplay] = useState(data);
 
-    let rowsToDisplay = data.filter((row) => {
-        // restituisco le righe in cui almeno una colonna
-        // ha il valore dell'alttributo specificato dall'utente
-        columns.some((col) => String(row[col]).toLowerCase().includes(searchValue.toLowerCase()));
-    });
+    useEffect(()=>{
+        setRowsToDisplay(data);
+    }, []);
 
-    if (rowsToDisplay.length == 0)
-        rowsToDisplay = data;
+    const searchRow = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value;
+        setSearchValue(value);
+
+        
+        if (!value) {
+            // if empty search, reset to full list
+            setRowsToDisplay(data);
+            return;
+        }
+
+        let resultingRows = data.filter((row) => {
+            // restituisco le righe in cui almeno una colonna
+            // ha il valore dell'alttributo specificato dall'utente
+            columns.some((col) => String(row[col]).toLowerCase().includes(searchValue.toLowerCase()));
+        });
+
+        if (resultingRows.length == 0)
+            resultingRows = data;
+        
+        setRowsToDisplay(resultingRows);
+    };
 
     return (
         <div className="w-full max-w-4xl bg-gray-900 text-white rounded-lg shadow-lg overflow-hidden">
@@ -28,7 +47,7 @@ function DataTable({ columns, data, selectedRows, onRowToggle }: DataTableArgs){
                     type="text"
                     placeholder="Search..."
                     value={searchValue}
-                    onChange={(e) => setSearchValue(e.target.value)}
+                    onChange={searchRow}
                     className="w-full p-2 rounded bg-gray-800 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
             </div>
@@ -48,7 +67,7 @@ function DataTable({ columns, data, selectedRows, onRowToggle }: DataTableArgs){
                         </tr>
                     </thead>
                     <tbody>
-                        {rowsToDisplay.map((elem, elemIndex) => {
+                        {data.map((elem, elemIndex) => {
                             const isSelected = selectedRows?.includes(elemIndex)
                             return(
                                 <tr

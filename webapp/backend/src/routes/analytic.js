@@ -89,7 +89,12 @@ function createAnalyticRouter(session, dbMongo){
             const companies = dbMongo.collection("company");
             const summarySheets = await companies.aggregate(query).toArray();
             const summaries = dbMongo.collection("summary");
-            await summaries.insertMany(summarySheets);
+
+            let summariesIds = []
+            for (let sheet of summarySheets)
+                summariesIds.push(sheet._id)
+
+            await summaries.updateMany({_id: {$in: summariesIds}}, )
             
             res.json(summarySheets);
             console.log(prova);
