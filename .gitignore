@@ -1,8 +1,11 @@
-docs
 LDBC_docs
-mongo_conf
-neo_conf
-queries
+__pycache__
+csv
+dumps
+json
+neo4/S_F_1.json
+neo4/S_F_0_1.json
+
 # Logs
 logs
 *.log
@@ -29,4 +32,3 @@ dist-ssr
 *.sw?
 *.json
 .env
-setup

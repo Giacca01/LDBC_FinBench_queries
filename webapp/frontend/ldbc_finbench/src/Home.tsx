@@ -1,10 +1,10 @@
-// componente che modella la home page
-// contenente la descrizione del progetto
+// Home page component
+// with simple project description
 function Home(){
     return(
         <main
             className="flex flex-col items-center justify-center min-h-screen px-6"
-            style={{ backgroundColor: "rgb(8, 20, 45)"}} // a nice dark blue, not too dark
+            style={{ backgroundColor: "rgb(8, 20, 45)"}}
         >
             <h1 className="text-white text-4xl font-bold mb-6 select-none">
                 LDBC Finbech Project

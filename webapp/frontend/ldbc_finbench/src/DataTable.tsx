@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
-// tipo degli argomenti della data table
+// types of Data Table arguments
 interface DataTableArgs{
     columns: string[];
     data: any[];
@@ -8,34 +8,36 @@ interface DataTableArgs{
     onRowToggle?: (id: number) => void;
 }
 
+// Data table with search functionality
 function DataTable({ columns, data, selectedRows, onRowToggle }: DataTableArgs){
     const [searchValue, setSearchValue] = useState("");
+    // set of indexes of the rows resulting from the search
+    // that will have to be displayed
     const [visibleIndexes, setVisibleIndexes] = useState<number[]>([]);
 
-
-    // Initialize with full rows
     useEffect(() => {
+        // at initilization all rows are displayed
         setVisibleIndexes(data.map((_, idx) => idx));
     }, [data]);
 
 
-    // Run filter every time searchTerm changes
+    // this function is run every time searchValue changes
     useEffect(() => {
+        // if nothing is search all data are displayed
         if (searchValue.trim() === "") {
-            setVisibleIndexes(data.map((_, idx) => idx)); // all indexes
+            setVisibleIndexes(data.map((_, idx) => idx));
         } else {
             const lower = searchValue.toLowerCase();
-            const matching = data
-                .map((row, idx) =>
+            const matching = data.map((row, idx) =>
+                    // row is displayed only if some
+                    // of its attributes contain searched value
                     Object.values(row).some((val) =>
                         String(val).toLowerCase().includes(lower)
-                    )
-                        ? idx
-                        : -1
+                    ) ? idx: -1
                 )
                 .filter((idx) => idx !== -1);
 
-            // If no match → restore all rows
+            // If no match display all rows
             setVisibleIndexes(matching.length > 0 ? matching : data.map((_, idx) => idx));
         }
     }, [searchValue, data]);

@@ -1,6 +1,6 @@
-// Pagina principale dell'applicazione
-// deve soltanto occuparsi di includere tutte le librerie necessarie
-// e di includere il componente App
+// Main application page
+// it just includes all the different modules use
+// a great example of React's composability and modularity
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
