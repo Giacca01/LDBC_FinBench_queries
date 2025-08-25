@@ -94,7 +94,7 @@ function createAnalyticRouter(session, dbMongo){
             for (let sheet of summarySheets)
                 summariesIds.push(sheet._id)
 
-            await summaries.updateMany({_id: {$in: summariesIds}}, )
+            //await summaries.updateMany({_id: {$in: summariesIds}}, )
             
             res.json(summarySheets);
             console.log(prova);

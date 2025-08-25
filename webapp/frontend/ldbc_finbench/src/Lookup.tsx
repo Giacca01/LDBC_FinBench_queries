@@ -22,35 +22,50 @@ type Edge = {
     label: string;
 };
 
-function Graph(){
+interface GraphProps {
+    nodes: Node[];
+    edges: Edge[];
+}
+
+function Graph({nodes, edges}: GraphProps){
+    return (
+        <div className="w-full mt-80 flex justify-center" style={{ position: "absolute", width: '70%', height: '60vh', backgroundColor: 'rgb(15, 30, 65)', borderRadius: '12px' }}>
+            <GraphCanvas nodes={nodes} edges={edges} theme={darkTheme} ></GraphCanvas>
+        </div>
+    );
+}
+
+function Lookup(){
     const [nodes, setNodes] = useState<Node[]>([]);
     const [edges, setEdges] = useState<Edge[]>([]);
     const [showMessage, setShowMessage] = useState(false);
     const [messageType, setMessageType] = useState("");
     const [message, setMessage] = useState("");
+    const [from, setFrom] = useState("19330");
+    const [to, setTo] = useState("19332");
 
-    useEffect(()=>{
-        async function fetchGraph(){
+    useEffect(() => {
+        async function fetchGraph() {
             setMessageType("info");
             setMessage("Loading Investors...");
             setShowMessage(true);
-            
+
             try {
-                const response = await fetch("http://localhost:2006/lookup/moneyLaundary/19330/endWindow/19332");
+                const response = await fetch("http://localhost:2006/lookup/moneyLaundary/" + from + " /endWindow/" + to);
                 if (!response.ok)
                     throw new Error("Failed to fetch money laundry resource. Code: " + response.status + " Message: " + response.statusText);
                 const responseData: MoneyLdr[] = await response.json();
-                
-                let nodesMap : Map<string, Node> = new Map();
-                let edges : Edge[] = [];
-                let i : number = 0;
-                let src : string = "";
-                let mid : string = "";
-                let dst : string = "";
 
-                for (let elem of responseData){
+                let nodesMap: Map<string, Node> = new Map();
+                let edges: Edge[] = [];
+                let i: number = 0;
+                let src: string = "";
+                let mid: string = "";
+                let dst: string = "";
 
-                    if (!nodesMap.has(elem.src)){
+                for (let elem of responseData) {
+
+                    if (!nodesMap.has(elem.src)) {
                         i++;
                         nodesMap.set(elem.src, {
                             id: i.toString(),
@@ -78,9 +93,9 @@ function Graph(){
                     src = nodesMap.get(elem.src)!.id;
                     mid = nodesMap.get(elem.mid)!.id;
                     dst = nodesMap.get(elem.dst)!.id;
-                    edges.push({ id: src + '->' + mid + ":" + elem.startDate, source: src, target: mid, label: "Transaction: " + src + "-" + mid + " date " + elem.startDate});
+                    edges.push({ id: src + '->' + mid + ":" + elem.startDate, source: src, target: mid, label: "Transaction: " + src + "-" + mid + " date " + elem.startDate });
 
-                    edges.push({ id: mid + '->' + dst + ":" + elem.startDate, source: mid, target: dst, label: "Transaction: " + mid + "-" + dst + " date " + elem.startDate});
+                    edges.push({ id: mid + '->' + dst + ":" + elem.startDate, source: mid, target: dst, label: "Transaction: " + mid + "-" + dst + " date " + elem.startDate });
                 }
 
                 setNodes([...nodesMap.values()]);
@@ -97,14 +112,6 @@ function Graph(){
     }, []);
 
     return (
-        <div className="w-full mt-60 flex justify-center" style={{ position:"absolute", width: '70%', height: '60vh', backgroundColor: 'rgb(15, 30, 65)', borderRadius: '12px' }}>
-            <GraphCanvas nodes={nodes} edges={edges} theme={darkTheme} ></GraphCanvas>
-        </div>
-    );
-}
-
-function Lookup(){
-    return (
         <main className="min-h-screen flex flex-col items-center justify-start p-6 space-y-8" style={{ backgroundColor: "rgb(10, 25, 55)" }}>
             {/* Title */}
             <h1 className="text-white text-4xl font-bold text-center mb-4 select-none">
@@ -120,7 +127,33 @@ function Lookup(){
                 For the transaction to be suspect, at least one of the involved account (either that of user1 or user2, or
                 the middle one) must be blocked.
             </p>
-            <Graph/>
+
+            <div className="flex items-center gap-4 p-3 rounded-xl bg-blue-900/60 border border-blue-700/50">
+                {/* From */}
+                <label className="flex items-center gap-2 text-white/90">
+                    <span className="text-sm">From (days)</span>
+                    <input
+                        type="number"
+                        value={from}
+                        onChange={(e) => setFrom(e.target.value)}
+                        className="px-2 py-1 w-28 rounded bg-blue-950 text-white placeholder-white/40
+                     border border-blue-700 focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                    />
+                </label>
+
+                {/* To */}
+                <label className="flex items-center gap-2 text-white/90">
+                    <span className="text-sm">To (days)</span>
+                    <input
+                        type="number"
+                        value={to}
+                        onChange={(e) => setTo(e.target.value)}
+                        className="px-2 py-1 w-28 rounded bg-blue-950 text-white placeholder-white/40
+                     border border-blue-700 focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                    />
+                </label>
+            </div>
+            <Graph nodes={nodes} edges={edges}/>
         </main>
     );
 }

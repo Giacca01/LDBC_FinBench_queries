@@ -10,34 +10,38 @@ interface DataTableArgs{
 
 function DataTable({ columns, data, selectedRows, onRowToggle }: DataTableArgs){
     const [searchValue, setSearchValue] = useState("");
-    const [rowsToDisplay, setRowsToDisplay] = useState(data);
+    const [visibleIndexes, setVisibleIndexes] = useState<number[]>([]);
 
-    useEffect(()=>{
-        setRowsToDisplay(data);
-    }, []);
 
-    const searchRow = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const value = e.target.value;
-        setSearchValue(value);
+    // Initialize with full rows
+    useEffect(() => {
+        setVisibleIndexes(data.map((_, idx) => idx));
+    }, [data]);
 
-        
-        if (!value) {
-            // if empty search, reset to full list
-            setRowsToDisplay(data);
-            return;
+
+    // Run filter every time searchTerm changes
+    useEffect(() => {
+        if (searchValue.trim() === "") {
+            setVisibleIndexes(data.map((_, idx) => idx)); // all indexes
+        } else {
+            const lower = searchValue.toLowerCase();
+            const matching = data
+                .map((row, idx) =>
+                    Object.values(row).some((val) =>
+                        String(val).toLowerCase().includes(lower)
+                    )
+                        ? idx
+                        : -1
+                )
+                .filter((idx) => idx !== -1);
+
+            // If no match → restore all rows
+            setVisibleIndexes(matching.length > 0 ? matching : data.map((_, idx) => idx));
         }
+    }, [searchValue, data]);
 
-        let resultingRows = data.filter((row) => {
-            // restituisco le righe in cui almeno una colonna
-            // ha il valore dell'alttributo specificato dall'utente
-            columns.some((col) => String(row[col]).toLowerCase().includes(searchValue.toLowerCase()));
-        });
 
-        if (resultingRows.length == 0)
-            resultingRows = data;
-        
-        setRowsToDisplay(resultingRows);
-    };
+
 
     return (
         <div className="w-full max-w-4xl bg-gray-900 text-white rounded-lg shadow-lg overflow-hidden">
@@ -47,7 +51,7 @@ function DataTable({ columns, data, selectedRows, onRowToggle }: DataTableArgs){
                     type="text"
                     placeholder="Search..."
                     value={searchValue}
-                    onChange={searchRow}
+                    onChange={(e) => setSearchValue(e.target.value)}
                     className="w-full p-2 rounded bg-gray-800 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
             </div>
@@ -67,9 +71,9 @@ function DataTable({ columns, data, selectedRows, onRowToggle }: DataTableArgs){
                         </tr>
                     </thead>
                     <tbody>
-                        {data.map((elem, elemIndex) => {
+                        {visibleIndexes.map((elemIndex) => {
                             const isSelected = selectedRows?.includes(elemIndex)
-                            return(
+                            return (
                                 <tr
                                     key={elemIndex}
                                     className={`transition duration-200 cursor-pointer ${isSelected ? "bg-green-700" : "hover:bg-dark-hover"}`}
@@ -80,12 +84,12 @@ function DataTable({ columns, data, selectedRows, onRowToggle }: DataTableArgs){
                                             key={col}
                                             className="px-6 py-4 whitespace-nowrap border-b border-gray-700"
                                         >
-                                            {elem[col]}
+                                            {data[elemIndex][col]}
                                         </td>
                                     ))}
                                 </tr>
                             );
-                        })}
+                        })}          
                     </tbody>
                 </table>
             </div>

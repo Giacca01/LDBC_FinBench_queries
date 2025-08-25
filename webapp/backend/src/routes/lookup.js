@@ -12,7 +12,7 @@ function createLookupRouter(sessionNeo, dbMongo){
 WHERE (src.isBlocked or dst.isBlocked or mid.isBlocked)
 AND (apoc.date.convert(rcv.createTime, 'ms', 'd') > $startWindow)
 AND (apoc.date.convert(rcv.createTime, 'ms', 'd') < $endWindow)
-RETURN DISTINCT pSrc.name as srcNick, mid.nickname as midNick, pDst.name as dstNick, apoc.date.convert(rcv.createTime, 'ms', 'd') as startDate`;
+RETURN pSrc.name as srcNick, mid.nickname as midNick, pDst.name as dstNick, apoc.date.convert(rcv.createTime, 'ms', 'd') as startDate`;
 
         try {
             

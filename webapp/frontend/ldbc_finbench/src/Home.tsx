@@ -10,9 +10,9 @@ function Home(){
                 LDBC Finbech Project
             </h1>
             <p className="max-w-3xl text-white text-justify text-xl leading-relaxed">
-                This website serves as a demo for the final project developed for 
-                the MAADB course, held at the University of Turin, duruing the academic year 2024/2025.
-                The project aim at developing and testing analytic and look queries on graph and
+                This website serves as a demo for the final project of 
+                the MAADB course, held at the University of Turin, during the academic year 2024/2025.
+                The project aim at developing and testing analytic and lookup queries on graph and
                 document-based datastores, populated with data from the LDBC Finbench Project.
                 In the corresponding sections, you can request queries execution, and visualize their
                 results.

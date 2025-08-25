@@ -156,7 +156,7 @@ function InvestorsList(){
             {showSimilarity && (
                 <div>
                     <p className="text-white text-center text-lg max-w-3xl mx-auto mt-6 leading-relaxed">
-                        The similarity value is: {similarity}
+                        The similarity value is: {similarity.toFixed(4)}
                     </p>
                     <p className="text-white text-lg text-center max-w-3xl mx-auto mb-8 leading-relaxed">
                         Summary of the companies the users invest in
