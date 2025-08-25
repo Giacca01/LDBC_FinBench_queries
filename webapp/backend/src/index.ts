@@ -16,7 +16,7 @@ let mongodbClient: mongodb.MongoClient;
 async function start(){
     // loading passwords and configuration
     // data from environment file
-    dotenv.config({path:"./.env"});
+    //dotenv.config({path:"./.env"});
     const app = express()
 
     // enabling cors so that
