@@ -3,8 +3,8 @@ __pycache__
 csv
 dumps
 json
-neo4/S_F_1.json
-neo4/S_F_0_1.json
+setup/neo4/S_F_1.json
+setup/neo4/SF_0_1.json
 
 # Logs
 logs
@@ -30,5 +30,4 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
-*.json
 .env
