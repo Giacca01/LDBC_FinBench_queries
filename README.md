@@ -10,7 +10,7 @@ Data are genered with the LDBC Finbench data generator.
 
 ## Setup
 Before using the application, and for a full breakdown of the project, please
-make sure to read the documentation PDF in the docs/ folder.
+make sure to read the PDF documentation.
 Remember to create the .env file and place credentials listes in the documentation inside it
 
 ### Prerequisites
